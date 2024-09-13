@@ -1,4 +1,5 @@
 import {useState, useEffect, useCallback} from 'react'
+import * as React from "react";
 import {motion, AnimatePresence} from 'framer-motion'
 import {
     FaLock,
@@ -7,7 +8,7 @@ import {
     FaLink,
     FaUserSecret,
     FaKey,
-    FaFileAlt, FaDatabase, FaInfo, FaFile, FaFont, FaCircleNotch, FaShieldAlt
+    FaFileAlt, FaDatabase, FaInfo, FaFile, FaFont, FaCircleNotch, FaShieldAlt, FaCog, FaCheckCircle
 } from 'react-icons/fa'
 import Confetti from 'react-confetti'
 import {decrypt, encrypt} from "./helper/encryption";
@@ -18,6 +19,8 @@ import {storeEncryptedData, extractEncryptedData} from "./helper/id";
 import {WalrusClient} from 'tuskscript'
 import ContentViewer, {SecureContent} from "./ContextViewer";
 
+const AGGREGATOR = "https://aggregator-devnet.walrus.space"
+const PUBLISHER = "https://publisher-devnet.walrus.space"
 const FeatureCard = ({icon, title, description}) => (
     <motion.div
         whileHover={{scale: 1.05, rotate: 1}}
@@ -58,28 +61,64 @@ interface ProgressIndicatorProps {
     totalSteps: number
 }
 
+interface ProgressIndicatorProps {
+    progress: {
+        step: number;
+        message: string;
+    };
+    totalSteps: number;
+}
+
 function ProgressIndicator({progress, totalSteps}: ProgressIndicatorProps) {
-    console.log("progress", progress)
     const percentage = (progress.step / totalSteps) * 100
+    const isComplete = percentage === 100
 
     return (
         <div className="mt-4 space-y-2">
             <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div
-                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-in-out"
+                    className={`h-2.5 rounded-full transition-all duration-300 ease-in-out ${
+                        isComplete ? 'bg-green-600' : 'bg-blue-600'
+                    }`}
                     style={{width: `${percentage}%`}}
                 ></div>
             </div>
-            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded" role="alert">
+            <div
+                className={`border-l-4 p-4 rounded ${
+                    isComplete
+                        ? 'bg-green-100 border-green-500 text-green-700'
+                        : 'bg-blue-100 border-blue-500 text-blue-700'
+                }`}
+                role="alert"
+            >
                 <div className="flex items-center">
-                    <svg className="animate-spin h-5 w-5 mr-3 text-blue-500" xmlns="http://www.w3.org/2000/svg"
-                         fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p className="font-bold">Step {progress.step} of {totalSteps}</p>
+                    {isComplete ? (
+                        <FaCheckCircle className="h-5 w-5 mr-3 text-green-500"/>
+                    ) : (
+                        <svg
+                            className="animate-spin h-5 w-5 mr-3 text-blue-500"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                            ></circle>
+                            <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                        </svg>
+                    )}
+                    <p className="font-bold">
+                        {isComplete ? 'Complete' : `Step ${progress.step} of ${totalSteps}`}
+                    </p>
                 </div>
                 <p className="text-sm">{progress.message}</p>
             </div>
@@ -166,7 +205,8 @@ export default function App() {
     } | null>(null);
     const [encryptionProgress, setEncryptionProgress] = useState({step: 0, message: ''})
     const [decryptionProgress, setDecryptionProgress] = useState({step: 0, message: ''})
-
+    const [showConfigInput, setShowConfigInput] = useState(false)
+    const [publishUrl, setPublishUrl] = useState(PUBLISHER)
     useEffect(() => {
         if (window.location.pathname.length > 1) {
             setActiveSection('view')
@@ -230,7 +270,7 @@ export default function App() {
             encrypted: toBase58(encrypted),
             iv: toBase58(iv),
         })], {type: 'text/json'})
-        const client = new WalrusClient()
+        const client = new WalrusClient(AGGREGATOR, publishUrl)
         setEncryptionProgress({step: 4, message: 'Storing encrypted data...'})
         const result = await client.store(blob, {contentType: 'text/json'})
         let id = ''
@@ -256,7 +296,7 @@ export default function App() {
         console.log("decryptCallback contentToDecrypt", contentToDecrypt)
         const blobId = extractEncryptedData(fromBase58(contentToDecrypt.id))
         setDecryptionProgress({step: 3, message: 'Retrieving data from storage...'})
-        const client = new WalrusClient()
+        const client = new WalrusClient(AGGREGATOR, publishUrl)
         const data: any = await client.retrieve(blobId, {asBlob: false})
         setDecryptionProgress({step: 4, message: 'Decrypting content...'})
         const decrypted = await decrypt(data.encrypted, contentToDecrypt.encryptionKey, data.iv, contentToDecrypt.version)
@@ -547,49 +587,74 @@ export default function App() {
             {decryptedContent && <ContentViewer data={decryptedContent}/>}
         </motion.div>
     )
+
+    const handleConfigSubmit = (e) => {
+        e.preventDefault()
+        // Handle the config link submission here
+        console.log('Config link submitted:', publishUrl)
+        setShowConfigInput(false)
+    }
     return (
         <div
             className="h-screen bg-gradient-to-br from-purple-400 to-indigo-600 flex flex-col p-4 items-center">
 
             <header className="mb-8 bg-white rounded-lg shadow-xl p-4 max-w-4xl w-full">
-                <div className="container mx-auto flex justify-end items-center">
-                    {/*logo*/}
+                <div className="container mx-auto flex justify-between items-center">
                     <div
-                        className="text-2xl font-bold flex items-center   text-indigo-500 transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95 cursor-pointer"
+                        className="text-2xl font-bold flex items-center text-indigo-500 transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95 cursor-pointer"
                         onClick={() => setActiveSection('home')}
                     >
-                        <FaUserSecret className="text-2xl text-indigo-500"/>
+                        <FaUserSecret className="text-2xl text-indigo-500 mr-2"/>
                         SecretLink
                     </div>
 
-                    <div className="flex-1"></div>
-                    <motion.button
-                        whileHover={{scale: 1.1}}
-                        whileTap={{scale: 0.9}}
-                        className={`p-2 rounded-full ${activeSection === 'upload' ? 'bg-indigo-100' : ''}`}
-                        onClick={() => setActiveSection('upload')}
-                    >
-                        <FaUpload className="text-2xl text-indigo-500"/>
-                    </motion.button>
-                    <motion.button
-                        whileHover={{scale: 1.1}}
-                        whileTap={{scale: 0.9}}
-                        className={`p-2 rounded-full ${activeSection === 'view' ? 'bg-indigo-100' : ''}`}
-                        onClick={() => setActiveSection('view')}
-                    >
-                        <FaLink className="text-2xl text-indigo-500"/>
-                    </motion.button>
-                    <motion.button
-                        whileHover={{scale: 1.1}}
-                        whileTap={{scale: 0.9}}
-                        className={`p-2 rounded-full ${activeSection === 'about' ? 'bg-indigo-100' : ''}`}
-                        onClick={() => setActiveSection('about')}
-                    >
-                        <FaInfo className="text-2xl text-indigo-500"/>
-                    </motion.button>
+                    <div className="flex items-center space-x-4">
+                        {showConfigInput ? (
+                            <form onSubmit={handleConfigSubmit} className="flex items-center">
+                                <input
+                                    type="text"
+                                    placeholder={publishUrl}
+                                    value={publishUrl}
+                                    onChange={(e) => setPublishUrl(e.target.value)}
+                                    className="mr-2 w-64"
+                                />
+                                <motion.button
+                                    type="submit"
+                                    whileHover={{scale: 1.1}}
+                                    whileTap={{scale: 0.9}}
+                                    className={`p-2 rounded-full  'bg-indigo-100'`}
+                                >
+                                    Set
+                                </motion.button>
+
+                            </form>
+                        ) : (
+                            <>
+                                <NavButton
+                                    icon={<FaUpload/>}
+                                    isActive={activeSection === 'upload'}
+                                    onClick={() => setActiveSection('upload')}
+                                />
+                                <NavButton
+                                    icon={<FaLink/>}
+                                    isActive={activeSection === 'view'}
+                                    onClick={() => setActiveSection('view')}
+                                />
+                                <NavButton
+                                    icon={<FaInfo/>}
+                                    isActive={activeSection === 'about'}
+                                    onClick={() => setActiveSection('about')}
+                                />
+                                <NavButton
+                                    icon={<FaCog/>}
+                                    isActive={showConfigInput}
+                                    onClick={() => setShowConfigInput(!showConfigInput)}
+                                />
+                            </>
+                        )}
+                    </div>
                 </div>
             </header>
-
             {showConfetti && <Confetti/>}
             <motion.div
                 initial={{opacity: 1, scale: 0.8}}
@@ -602,5 +667,18 @@ export default function App() {
                 </AnimatePresence>
             </motion.div>
         </div>
+    )
+}
+
+function NavButton({icon, isActive, onClick}) {
+    return (
+        <motion.button
+            whileHover={{scale: 1.1}}
+            whileTap={{scale: 0.9}}
+            className={`p-2 rounded-full ${isActive ? 'bg-indigo-100' : ''}`}
+            onClick={onClick}
+        >
+            {React.cloneElement(icon, {className: "text-2xl text-indigo-500"})}
+        </motion.button>
     )
 }
