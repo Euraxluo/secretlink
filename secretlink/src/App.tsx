@@ -11,7 +11,10 @@ import {
     FaFileAlt, FaDatabase, FaInfo, FaFile, FaFont, FaCircleNotch, FaShieldAlt, FaCog, FaCheckCircle
 } from 'react-icons/fa'
 import Confetti from 'react-confetti'
-import {decrypt, encrypt} from "./helper/encryption";
+import {
+    decryptDemo, decryptUploadedContent,
+    encryptAndPrepareForUpload, encryptDemo,
+} from "./helper/encryption";
 import {fromBase58, toBase58} from "./helper/base58";
 import {decodeCompositeKey, encodeCompositeKey} from "./helper/encoding";
 import {LATEST_KEY_VERSION} from "./helper/constants";
@@ -20,7 +23,9 @@ import {WalrusClient} from 'tuskscript'
 import ContentViewer, {SecureContent} from "./ContextViewer";
 
 const AGGREGATOR = "https://aggregator-devnet.walrus.space"
+// const AGGREGATOR = "http://localhost:31415"
 const PUBLISHER = "https://publisher-devnet.walrus.space"
+// const PUBLISHER = "http://localhost:31415"
 const FeatureCard = ({icon, title, description}) => (
     <motion.div
         whileHover={{scale: 1.05, rotate: 1}}
@@ -162,8 +167,7 @@ export default function App() {
 
     const encryptDemoCallback = useCallback(async (demoText: string) => {
         console.log("encryptCallback demoText", demoText)
-        const {encrypted, iv, key} = await encrypt(demoText);
-
+        const {encrypted, iv, key} = await encryptDemo(demoText);
         const id = toBase58(storeEncryptedData(demoData.length + ''));
         const compositeKey = encodeCompositeKey(LATEST_KEY_VERSION, id, key);
         demoData = [...demoData, {
@@ -182,7 +186,7 @@ export default function App() {
         console.log(index)
         try {
             const data = demoData[parseInt(index)]
-            const decrypted = await decrypt(data.encrypted, encryptionKey, data.iv, version);
+            const decrypted = await decryptDemo(data.encrypted, encryptionKey, data.iv, version);
             console.log("decryptCallback decrypted", decrypted)
             setDemoText(decrypted)
         } catch (error) {
@@ -218,32 +222,25 @@ export default function App() {
         e.preventDefault()
         setIsUploading(true)
         setEncryptionProgress({step: 1, message: 'Preparing content for encryption...'})
-        try {
-            if (inputType === 'text') {
-                setContentToEncrypt({
-                    type: 'text',
-                    content: inputContent,
-                    timestamp: Date.now()
-                })
-            } else if (file) {
-                const fr = new FileReader()
-                fr.readAsArrayBuffer(file)
-                fr.addEventListener('load', async (e) => {
-                    setContentToEncrypt({
-                        type: 'file',
-                        content: e.target.result,
-                        fileType: file.type,
-                        fileName: file.name,
-                        timestamp: Date.now()
-                    })
-                })
-            } else {
-                throw new Error('No content to encrypt')
-            }
-        } catch (error) {
-            alert('Encryption failed')
-            console.error('Encryption failed:', error)
-            setIsUploading(false)
+        if (inputType === 'text') {
+            setContentToEncrypt({
+                type: 'text',
+                content: inputContent,
+                timestamp: Date.now()
+            })
+        } else if (file) {
+            // 直接使用文件对象，不需要转换为 Base64
+            setContentToEncrypt({
+                type: 'file',
+                content: file, // 直接使用 File 对象，它是 Blob 的一个特殊类型
+                fileType: file.type,
+                fileName: file.name,
+                timestamp: Date.now()
+            })
+            setEncryptionProgress({step: 1, message: 'File ready for encryption'})
+        } else {
+            setEncryptionProgress({step: 0, message: 'No content to encrypt'})
+            console.error('No input content')
         }
     }
     const handleDecrypt = async (e: React.FormEvent) => {
@@ -251,59 +248,88 @@ export default function App() {
         setIsDecrypting(true)
         setDecryptionProgress({step: 1, message: 'Decoding composite key...'})
         try {
-            console.error("shareLink", shareLink)
+            console.info("shareLink", shareLink)
             setContentToDecrypt(decodeCompositeKey(shareLink.substring((window.location.origin + "/").length)))
         } catch (error) {
-            console.error('Decryption failed:', error)
+            console.info('Decryption failed:', error)
             setDecryptionProgress({step: 0, message: 'Decryption failed. Please try again.'})
             setIsDecrypting(false)
         }
     }
 
     const encryptCallback = useCallback(async () => {
-        setEncryptionProgress({step: 2, message: 'Encrypting content...'})
-        console.log("encryptCallback contentToEncrypt", contentToEncrypt)
-        const jsonContent = JSON.stringify(contentToEncrypt)
-        const {encrypted, iv, key} = await encrypt(jsonContent)
-        setEncryptionProgress({step: 3, message: 'Preparing encrypted data for storage...'})
-        const blob = new Blob([JSON.stringify({
-            encrypted: toBase58(encrypted),
-            iv: toBase58(iv),
-        })], {type: 'text/json'})
-        const client = new WalrusClient(AGGREGATOR, publishUrl)
-        setEncryptionProgress({step: 4, message: 'Storing encrypted data...'})
-        const result = await client.store(blob, {contentType: 'text/json'})
-        let id = ''
-        if ('newlyCreated' in result) {
-            id = result.newlyCreated.blobObject.blobId as string
-        } else if ('alreadyCertified' in result) {
-            id = result.alreadyCertified.blobId as string
+        try {
+            console.log("encryptCallback contentToEncrypt", contentToEncrypt)
+            setEncryptionProgress({step: 2, message: 'Encrypting content...'})
+            const {blob, key} = await encryptAndPrepareForUpload(
+                contentToEncrypt,
+                (progress, message) => {
+                    console.log(`Progress: ${progress.toFixed(2)}% - ${message}`);
+                    setEncryptionProgress({
+                        step: 3,
+                        message: `Encrypting: ${message} (${progress.toFixed(2)}%)`
+                    });
+                }
+            );
+
+            console.log("encryptCallback blob", blob);
+            setEncryptionProgress({step: 4, message: 'Storing encrypted blob data...'})
+            const client = new WalrusClient(AGGREGATOR, publishUrl)
+            const result = await client.store(blob, {contentType: 'text/json'})
+            let id = ''
+            if ('newlyCreated' in result) {
+                id = result.newlyCreated.blobObject.blobId as string
+            } else if ('alreadyCertified' in result) {
+                id = result.alreadyCertified.blobId as string
+            }
+            setEncryptionProgress({step: 5, message: 'Generating share link...'})
+            const compositeKey = encodeCompositeKey(LATEST_KEY_VERSION, toBase58(storeEncryptedData(id)), key)
+            const url = `${window.location.origin}/${compositeKey}`
+            setShareLink(url)
+            setIsUploading(false)
+            setEncryptionProgress({step: 6, message: 'Encryption complete!'})
+            navigator.clipboard.writeText(url).then(() => {
+                setShowConfetti(true)
+                setTimeout(() => setShowConfetti(false), 5000)
+            })
+        } catch (error) {
+            setEncryptionProgress({step: 0, message: 'Encrypting failed!'})
+            console.error('Encryption failed:', error);
         }
-        setEncryptionProgress({step: 5, message: 'Generating share link...'})
-        const compositeKey = encodeCompositeKey(LATEST_KEY_VERSION, toBase58(storeEncryptedData(id)), key)
-        const url = `${window.location.origin}/${compositeKey}`
-        setShareLink(url)
-        setIsUploading(false)
-        setEncryptionProgress({step: 6, message: 'Encryption complete!'})
-        navigator.clipboard.writeText(url).then(() => {
-            setShowConfetti(true)
-            setTimeout(() => setShowConfetti(false), 5000)
-        })
     }, [contentToEncrypt])
 
     const decryptCallback = useCallback(async () => {
-        setDecryptionProgress({step: 2, message: 'Extracting encrypted data...'})
-        console.log("decryptCallback contentToDecrypt", contentToDecrypt)
-        const blobId = extractEncryptedData(fromBase58(contentToDecrypt.id))
-        setDecryptionProgress({step: 3, message: 'Retrieving data from storage...'})
-        const client = new WalrusClient(AGGREGATOR, publishUrl)
-        const data: any = await client.retrieve(blobId, {asBlob: false})
-        setDecryptionProgress({step: 4, message: 'Decrypting content...'})
-        const decrypted = await decrypt(data.encrypted, contentToDecrypt.encryptionKey, data.iv, contentToDecrypt.version)
-        setDecryptionProgress({step: 5, message: 'Processing decrypted content...'})
-        setDecryptedContent(JSON.parse(decrypted))
-        setDecryptionProgress({step: 6, message: 'Decryption complete!'})
+        try {
+            setDecryptionProgress({step: 2, message: 'Extracting encrypted data...'})
+            console.log("decryptCallback contentToDecrypt", contentToDecrypt)
+            const blobId = extractEncryptedData(fromBase58(contentToDecrypt.id))
+            setDecryptionProgress({step: 3, message: 'Retrieving data from storage...'})
+            const client = new WalrusClient(AGGREGATOR, publishUrl)
+            const data: Blob = await client.retrieve(blobId, {asBlob: true})
+            setDecryptionProgress({step: 4, message: 'Decrypting content...'})
+            console.log("decryptCallback data", data)
+            console.log("decryptCallback contentToDecrypt", contentToDecrypt)
+            const decryptedContent = await decryptUploadedContent(
+                data,
+                contentToDecrypt.encryptionKey,
+                (progress, message) => {
+                    console.log(`Progress: ${progress.toFixed(2)}% - ${message}`);
+                    setDecryptionProgress({
+                        step: 2,
+                        message: `Decrypting: ${message} (${progress.toFixed(2)}%)`
+                    });
+                }
+            );
+            console.log("decryptCallback decryptedContent", decryptedContent)
+            setDecryptedContent(decryptedContent);
+            setDecryptionProgress({step: 6, message: 'Decryption complete!'})
+        } catch (error) {
+            setDecryptionProgress({step: 0, message: 'Decryption failed!'})
+            console.error('Decryption failed:', error);
+        }
+
     }, [contentToDecrypt])
+
     useEffect(() => {
         if (contentToEncrypt) {
             encryptCallback()
@@ -315,6 +341,40 @@ export default function App() {
             decryptCallback()
         }
     }, [contentToDecrypt, encryptCallback])
+
+    const convertIframeUrl = (url: string): string => {
+        // Trim whitespace from the input URL
+        url = url.trim()
+
+        // Check if the URL is empty or just a protocol
+        if (!url || /^https?:\/\/?$/i.test(url)) {
+            return url
+        }
+
+        try {
+            // If the URL doesn't start with http:// or https://, add https://
+            if (!/^https?:\/\//i.test(url)) {
+                url = 'https://' + url
+            }
+
+            const parsedUrl = new URL(url)
+
+            // Check if the URL has a valid domain
+            if (!parsedUrl.hostname) {
+                return url
+            }
+
+            return `${parsedUrl.origin}/#${parsedUrl.pathname}${parsedUrl.search}`
+        } catch (error) {
+            console.error('Invalid URL:', url)
+            return url // Return the original URL if it's invalid
+        }
+    }
+    const iframeCode = `<iframe
+  src="${convertIframeUrl(shareLink)}"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen
+></iframe>`
 
     const ProcessStep = ({icon, title, description}) => (
         <motion.div
@@ -350,7 +410,7 @@ export default function App() {
                 <FeatureCard
                     icon={<FaLink className="w-6 h-6"/>}
                     title="Immutable Records"
-                    description="Blockchain ensures your shared content remains tamper-proof and verifiable."
+                    description="Sui Blockchain And Walrus Protocol ensures your shared content remains tamper-proof and verifiable."
                 />
                 <FeatureCard
                     icon={<FaShieldAlt className="w-6 h-6"/>}
@@ -359,12 +419,13 @@ export default function App() {
                 />
             </div>
 
-            <div className="flex-col space-y-1 bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex-col space-y-4 bg-white p-6 rounded-lg shadow-lg">
                 <h3 className="text-xl font-semibold mb-4">Try our encryption demo!</h3>
-                <div className="flex items-center justify-center space-x-4">
+
+                <div className="space-y-4 justify-center sm:space-y-0 sm:flex sm:items-center sm:space-x-2">
                     <input
                         type="text"
-                        className="px-3 py-2 border border-gray-300 rounded-md"
+                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md"
                         placeholder="Enter some text"
                         value={demoText}
                         onChange={(e) => setDemoText(e.target.value)}
@@ -372,7 +433,7 @@ export default function App() {
                     <motion.button
                         whileHover={{scale: 1.05}}
                         whileTap={{scale: 0.95}}
-                        className="bg-indigo-500 text-white py-2 px-4 rounded-md"
+                        className="w-full sm:w-auto mt-2 sm:mt-0 bg-indigo-500 text-white py-2 px-4 rounded-md"
                         onClick={() => {
                             setDemoText(demoText)
                             setIsDemoEncrypting(true)
@@ -381,10 +442,10 @@ export default function App() {
                         Encrypt
                     </motion.button>
                 </div>
-                <div className="flex items-center justify-center space-x-4">
+                <div className="space-y-4 justify-center sm:space-y-0 sm:flex sm:items-center sm:space-x-2">
                     <input
                         type="text"
-                        className="px-3 py-2 border border-gray-300 rounded-md"
+                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md"
                         placeholder="Enter some text"
                         value={encodeText}
                         onChange={(e) => setEncodeText(e.target.value)}
@@ -392,7 +453,7 @@ export default function App() {
                     <motion.button
                         whileHover={{scale: 1.05}}
                         whileTap={{scale: 0.95}}
-                        className="bg-indigo-500 text-white py-2 px-4 rounded-md"
+                        className="w-full sm:w-auto mt-2 sm:mt-0 bg-indigo-500 text-white py-2 px-4 rounded-md"
                         onClick={() => {
                             setEncodeText(encodeText)
                             setIsDemoDecrypting(true)
@@ -402,7 +463,6 @@ export default function App() {
                     </motion.button>
                 </div>
             </div>
-
             <motion.button
                 whileHover={{scale: 1.05}}
                 whileTap={{scale: 0.95}}
@@ -412,10 +472,37 @@ export default function App() {
                 Get Started
             </motion.button>
 
+
             <FloatingObject><FaLock className="text-4xl text-white"/></FloatingObject>
             <FloatingObject><FaUnlock className="text-4xl text-white"/></FloatingObject>
             <FloatingObject><FaUpload className="text-4xl text-white"/></FloatingObject>
 
+            <div className="flex-col space-y-4 bg-white p-6 rounded-lg shadow-lg">
+                <div className="aspect-w-16 aspect-h-9">
+                    <iframe
+                        src={`${window.location.origin}/#/GRcc2ygPoAKw2KcKVmupuS8vveKnj6evQjzkBNKLD1xgVDsR6pR3SLbRkDzAYVwFRqcDdb9DUUUcbVuEUGpyzqDMUYuyzxtND93fZxd628vKCKSXNudi5qnAEw5XXKRGUPJgzP8wisk1TaQaj8zQQWUcoUjDCFJERizbD1B35HuALPUm4u4bDrVbxsnSYZemzSchETYUoJNtD5ewMwDDgN5Btfy25cUxuRh2Q9Da5nheMjrvADKtrSy4377DLupSCcndfj54Y6y5iYjSZjipnmWYM9StTdYRnV3ppCZGMDjZjtZhuPidES2JNFgn85wSy32NAxLN48DPjjqAVf8LFFnkzaNBHtVBQsD6FcRrQJP6YRTvPzkv`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
+                </div>
+            </div>
+            <div className="flex-col space-y-4 bg-white p-6 rounded-lg shadow-lg mt-4">
+                <div className="text-4xl text-indigo-500 mb-4">Feature for Breaking the Ice Project</div>
+                <h3 className="text-xl font-semibold mb-2">We have now developed a feature supports blob ifram
+                    embedding</h3>
+                <p className="text-gray-600">
+                    <code>{`<iframe
+src="${window.location.origin}/#/bausJtj8WRn-LaRyZzK1Z-TWAxvtIj99nQDrrVz1WJk?mimetype=video/mp4">
+</iframe>`}</code>
+                </p>
+                <div className="aspect-w-16 aspect-h-9">
+                    <iframe
+                        src={`${window.location.origin}/#/bausJtj8WRn-LaRyZzK1Z-TWAxvtIj99nQDrrVz1WJk?mimetype=video/mp4`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
+                </div>
+            </div>
         </motion.div>
     )
     const renderAbout = () => (
@@ -545,10 +632,32 @@ export default function App() {
                 <motion.div
                     initial={{opacity: 0, y: 20}}
                     animate={{opacity: 1, y: 0}}
-                    className="mt-6 p-4 bg-green-100 rounded-md"
+                    className="mt-6 p-4 bg-green-50 opacity-100 rounded-md"
                 >
                     <p className="text-green-800 font-medium">Your share link:</p>
-                    <p className="text-sm break-all">{shareLink}</p>
+                    <div className="flex items-start bg-gray-100 p-2 rounded">
+                        <p className="text-sm break-all">{shareLink}</p>
+                    </div>
+                    <p className="text-green-800 font-medium mb-2">Iframe embed code:</p>
+                    <div className="flex items-start bg-gray-100 p-2 rounded">
+                      <pre className="text-sm break-all flex-grow overflow-x-auto">
+                        <code>{iframeCode}</code>
+                      </pre>
+                    </div>
+
+                    <div>
+                        <p className="text-green-800 font-medium mb-2">Preview:</p>
+                        <div className="border border-gray-300 rounded">
+                            <iframe
+                                src={convertIframeUrl(shareLink)}
+                                width="100%"
+                                height="500"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            />
+                        </div>
+                    </div>
                 </motion.div>
             )}
         </form>

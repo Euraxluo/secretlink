@@ -1,4 +1,3 @@
-import {toBase58} from "./base58";
 import {ID_LENGTH} from "./constants";
 
 
