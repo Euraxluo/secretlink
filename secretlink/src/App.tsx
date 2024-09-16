@@ -22,10 +22,10 @@ import {storeEncryptedData, extractEncryptedData} from "./helper/id";
 import {WalrusClient} from 'tuskscript'
 import ContentViewer, {SecureContent} from "./ContextViewer";
 
-const AGGREGATOR = "https://aggregator-devnet.walrus.space"
-// const AGGREGATOR = "http://localhost:31415"
-const PUBLISHER = "https://publisher-devnet.walrus.space"
-// const PUBLISHER = "http://localhost:31415"
+// const AGGREGATOR = "https://aggregator-devnet.walrus.space"
+const AGGREGATOR = "http://localhost:31415"
+// const PUBLISHER = "https://publisher-devnet.walrus.space"
+const PUBLISHER = "http://localhost:31415"
 const FeatureCard = ({icon, title, description}) => (
     <motion.div
         whileHover={{scale: 1.05, rotate: 1}}
@@ -480,7 +480,7 @@ export default function App() {
             <div className="flex-col space-y-4 bg-white p-6 rounded-lg shadow-lg">
                 <div className="aspect-w-16 aspect-h-9">
                     <iframe
-                        src={`${window.location.origin}/#/GRcc2ygPoAKw2KcKVmupuS8vveKnj6evQjzkBNKLD1xgVDsR6pR3SLbRkDzAYVwFRqcDdb9DUUUcbVuEUGpyzqDMUYuyzxtND93fZxd628vKCKSXNudi5qnAEw5XXKRGUPJgzP8wisk1TaQaj8zQQWUcoUjDCFJERizbD1B35HuALPUm4u4bDrVbxsnSYZemzSchETYUoJNtD5ewMwDDgN5Btfy25cUxuRh2Q9Da5nheMjrvADKtrSy4377DLupSCcndfj54Y6y5iYjSZjipnmWYM9StTdYRnV3ppCZGMDjZjtZhuPidES2JNFgn85wSy32NAxLN48DPjjqAVf8LFFnkzaNBHtVBQsD6FcRrQJP6YRTvPzkv`}
+                        src={`${window.location.origin}/#/GkotSqUtiXsgrDQCBePP8fexh8Ybxq7MW3ZiD9HtKKsBZx7Vqq71FEUbRSKaxTq8qkDnSjxzkfZkxsQPn79Jp8CtgHTPNzqMAV7akjh54DweaBPSLMDUWusGtgVpvorUtZpvnypSgi5aKeVpAsFogta1djfHxarJj9NHbuhYU3YgSBzTECZorwCKH66bH8FXyFWJ7CByZyhWSWKY4Szdv5Kys9hPjoDyPQYf96nnrEAoLM15fU9abXVpAryE31wqDuXeiBME7wpWxCZLxXN5YJgQLgNuYpqc4u86U2si7DPUuLRKXk3NXUVbxaSmTwPXnftYkSQDF2DwzvheRWqjxcyP5ywBVgperWAL745rMkMTymjHVQxk`}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
                     ></iframe>
@@ -492,12 +492,13 @@ export default function App() {
                     embedding</h3>
                 <p className="text-gray-600">
                     <code>{`<iframe
-src="${window.location.origin}/#/bausJtj8WRn-LaRyZzK1Z-TWAxvtIj99nQDrrVz1WJk?mimetype=video/mp4">
+src="${window.location.origin}/#/oBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEI?mimetype=video/mp4">
 </iframe>`}</code>
                 </p>
+
                 <div className="aspect-w-16 aspect-h-9">
                     <iframe
-                        src={`${window.location.origin}/#/bausJtj8WRn-LaRyZzK1Z-TWAxvtIj99nQDrrVz1WJk?mimetype=video/mp4`}
+                        src={`${window.location.origin}/#/oBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEI?mimetype=video/mp4`}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
                     ></iframe>
