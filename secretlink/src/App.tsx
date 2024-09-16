@@ -22,10 +22,10 @@ import {storeEncryptedData, extractEncryptedData} from "./helper/id";
 import {WalrusClient} from 'tuskscript'
 import ContentViewer, {SecureContent} from "./ContextViewer";
 
-// const AGGREGATOR = "https://aggregator-devnet.walrus.space"
-const AGGREGATOR = "http://localhost:31415"
-// const PUBLISHER = "https://publisher-devnet.walrus.space"
-const PUBLISHER = "http://localhost:31415"
+const AGGREGATOR = "https://aggregator-devnet.walrus.space"
+// const AGGREGATOR = "http://localhost:31415"
+const PUBLISHER = "https://publisher-devnet.walrus.space"
+// const PUBLISHER = "http://localhost:31415"
 const FeatureCard = ({icon, title, description}) => (
     <motion.div
         whileHover={{scale: 1.05, rotate: 1}}
