@@ -370,11 +370,7 @@ export default function App() {
             return url // Return the original URL if it's invalid
         }
     }
-    const iframeCode = `<iframe
-  src="${convertIframeUrl(shareLink)}"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-  allowfullscreen
-></iframe>`
+    const iframeCode = `<iframe src="${convertIframeUrl(shareLink)}"></iframe>`
 
     const ProcessStep = ({icon, title, description}) => (
         <motion.div
@@ -490,12 +486,15 @@ export default function App() {
                 <div className="text-4xl text-indigo-500 mb-4">Feature for Breaking the Ice Project</div>
                 <h3 className="text-xl font-semibold mb-2">We have now developed a feature supports blob ifram
                     embedding</h3>
-                <p className="text-gray-600">
-                    <code>{`<iframe
-src="${window.location.origin}/#/oBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEI?mimetype=video/mp4">
-</iframe>`}</code>
-                </p>
-
+                <div className="w-full max-w-2xl mx-auto p-4">
+                    <div className="w-full rounded-md border overflow-x-auto">
+                        <pre className="p-4 text-sm">
+                          <code className="text-gray-600 whitespace-pre-wrap break-all">
+                            {`<iframe src="${window.location.origin}/#/oBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEIoBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEIoBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEI?mimetype=video/mp4"></iframe>`}
+                          </code>
+                        </pre>
+                    </div>
+                </div>
                 <div className="aspect-w-16 aspect-h-9">
                     <iframe
                         src={`${window.location.origin}/#/oBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEI?mimetype=video/mp4`}
@@ -635,25 +634,33 @@ src="${window.location.origin}/#/oBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEI?mim
                     animate={{opacity: 1, y: 0}}
                     className="mt-6 p-4 bg-green-50 opacity-100 rounded-md"
                 >
-                    <p className="text-green-800 font-medium">Your share link:</p>
-                    <div className="flex items-start bg-gray-100 p-2 rounded">
-                        <p className="text-sm break-all">{shareLink}</p>
+                    <div className="w-full mx-auto p-4">
+                        <p className="text-green-800 font-medium">Your share link:</p>
+                        <div className="w-full rounded-md border overflow-x-auto">
+                        <pre className="p-4 text-sm">
+                          <code className="text-gray-600 whitespace-pre-wrap break-all">
+                              {shareLink}
+                          </code>
+                        </pre>
+                        </div>
                     </div>
-                    <p className="text-green-800 font-medium mb-2">Iframe embed code:</p>
-                    <div className="flex items-start bg-gray-100 p-2 rounded">
-                      <pre className="text-sm break-all flex-grow overflow-x-auto">
-                        <code>{iframeCode}</code>
-                      </pre>
+                    <div className="w-full mx-auto p-4">
+                        <p className="text-green-800 font-medium mb-2">Iframe embed code:</p>
+                        <div className="w-full rounded-md border overflow-x-auto">
+                        <pre className="p-4 text-sm">
+                          <code className="text-gray-600 whitespace-pre-wrap break-all">
+                            {iframeCode}
+                          </code>
+                        </pre>
+                        </div>
                     </div>
-
-                    <div>
+                    <div className="w-full mx-auto p-4">
                         <p className="text-green-800 font-medium mb-2">Preview:</p>
-                        <div className="border border-gray-300 rounded">
+                        <div className="w-full rounded-md border overflow-x-auto">
                             <iframe
                                 src={convertIframeUrl(shareLink)}
                                 width="100%"
                                 height="500"
-                                frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
                             />
