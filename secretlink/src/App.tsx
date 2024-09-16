@@ -490,7 +490,7 @@ export default function App() {
                     <div className="w-full rounded-md border overflow-x-auto">
                         <pre className="p-4 text-sm">
                           <code className="text-gray-600 whitespace-pre-wrap break-all">
-                            {`<iframe src="${window.location.origin}/#/oBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEIoBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEIoBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEI?mimetype=video/mp4"></iframe>`}
+                            {`<iframe src="${window.location.origin}/#/oBFdZsNSQcQFwcHLaEL5Ar5LdbcB6Qw3qMTpiYKxDEI?mimetype=video/mp4"></iframe>`}
                           </code>
                         </pre>
                     </div>
