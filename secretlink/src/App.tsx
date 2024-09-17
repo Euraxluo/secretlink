@@ -725,7 +725,7 @@ export default function App() {
                         SecretLink
                     </div>
 
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-1">
                         {showConfigInput ? (
                             <form onSubmit={handleConfigSubmit} className="flex items-center">
                                 <input
@@ -733,7 +733,7 @@ export default function App() {
                                     placeholder={publishUrl}
                                     value={publishUrl}
                                     onChange={(e) => setPublishUrl(e.target.value)}
-                                    className="mr-2 w-64"
+                                    className="ml-2 mr-1 w-32 sm:w-80"
                                 />
                                 <motion.button
                                     type="submit"
