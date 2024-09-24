@@ -1,4 +1,4 @@
-# secretlink
+# secretlink(Walrus Breaking the Ice Shortlisted)
 Display for private storage on walrus
 
 #### site: https://secretlink.walrus.site
