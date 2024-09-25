@@ -55,23 +55,29 @@ Recipients use the shared link to access the decryption page. The step-by-step d
 
 SecretLink leverages cutting-edge technologies to ensure security and performance:
 
-a) React and Next.js for a responsive, server-side rendered frontend.
-b) Framer Motion for smooth, engaging animations.
-c) AES-GCM encryption for state-of-the-art security.
-d) Sui Blockchain and Walrus Protocol for decentralized, immutable storage.
+a) React and Next.js for a responsive, server-side rendered frontend. 
+
+b) Framer Motion for smooth, engaging animations. 
+
+c) AES-GCM encryption for state-of-the-art security. 
+
+d) Sui Blockchain and Walrus Protocol for decentralized, immutable storage. 
 
 ### Future Prospects:
 
 
 SecretLink addresses a critical need in today's walrus landscape. 
 
-a) Other Project Adoption: Secure document sharing for other project and organizations.
-b) Personal Use: Private sharing of sensitive personal information.
-c) Incentivization Integration: Potential for tokenization and incentivization models.
-d) API Development: Enabling third-party applications to leverage our secure sharing infrastructure.
+a) Other Project Adoption: Secure document sharing for other project and organizations. 
+
+b) Personal Use: Private sharing of sensitive personal information. 
+
+c) Incentivization Integration: Potential for tokenization and incentivization models. 
+
+d) API Development: Enabling third-party applications to leverage our secure sharing infrastructure. 
 
 #### Future enhancements could include:
 
-- Multi-language support
-- Integration with other tools and project
-- Advanced access control features (e.g., time-limited access, multi-factor authentication)
+- Multi-language support 
+- Integration with other tools and project 
+- Advanced access control features (e.g., time-limited access, multi-factor authentication) 
