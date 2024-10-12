@@ -1,4 +1,4 @@
-# secretlink(Walrus Breaking the Ice Shortlisted)
+# secretlink(Walrus Breaking the Ice Prize Winner)
 Display for private storage on walrus
 
 #### site: https://secretlink.walrus.site
