@@ -1,4 +1,4 @@
-import {ID_LENGTH} from "./constants";
+import {ID_LENGTH} from "../config/constants";
 
 
 // 将字符串转换为十六进制

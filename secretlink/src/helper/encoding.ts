@@ -1,5 +1,5 @@
 import { fromBase58, toBase58 } from "./base58";
-import { ID_LENGTH, ENCRYPTION_KEY_LENGTH } from "./constants";
+import { ID_LENGTH, ENCRYPTION_KEY_LENGTH } from "../config/constants";
 /**
  * To share links easily, we encode the id, where the data is stored in redis, together with the secret encryption key.
  */
