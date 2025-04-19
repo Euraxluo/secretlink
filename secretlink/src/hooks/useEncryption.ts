@@ -188,13 +188,14 @@ export const useEncryption = () => {
                     console.log("开始存储加密数据...");
                     const blobId = await client.store(encryptedBlob);
                     console.log("存储完成，blobId:", blobId);
+                    setEncryptionProgress({step: 5, message: 'Generating share link...'});
                     
                     // 生成最终的分享链接 - 简化格式
                     const finalShareLink = `${window.location.origin}/${shareId}:${blobId}`;
                     console.log("生成最终分享链接:", finalShareLink);
                     
                     setShareLink(finalShareLink);
-                    setEncryptionProgress({step: 5, message: 'Encryption complete!'});
+                    setEncryptionProgress({step: 6, message: 'Encryption complete!'});
                     
                     return finalShareLink;
                 } catch (error) {
@@ -233,7 +234,6 @@ export const useEncryption = () => {
                         console.log("请求参数: contentType='text/json', epoch=100");
                         const result = await client.store(blob, {
                             contentType: 'text/json',
-                            epoch: 100 // 指定epoch为100，提高数据存储的持久性
                         });
                         console.log("存储结果:", result);
                         const id = result;
