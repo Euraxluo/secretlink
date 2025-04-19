@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useEffect } from 'react'
+import { useEffect,useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Confetti from 'react-confetti'
 import { 
@@ -11,7 +11,6 @@ import {
 } from 'react-icons/fa'
 import { ConnectButton, Connector } from '@ant-design/web3'
 import { useCurrentAccount } from '@mysten/dapp-kit'
-import { SealClient } from'@mysten/seal'
 
 // 组件引入
 import NavButton from './components/NavButton'
@@ -21,6 +20,7 @@ import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
 import UploadPage from './pages/UploadPage'
 import ViewPage from './pages/ViewPage'
+// import SubscriptionPage from './pages/SubscriptionPage'
 
 // 钩子引入
 import { useEncryption } from './hooks/useEncryption'
@@ -79,8 +79,60 @@ export default function App() {
         
         // Walrus 配置
         setCustomPublisherUrl,
-        setCustomAggregatorUrl
+        setCustomAggregatorUrl,
+        
+        // SEAL 访问控制配置
+        // accessControl,
+        // setAccessControl,
+        // allowedAddresses,
+        // setAllowedAddresses,
+        // subscriptionFee,
+        // setSubscriptionFee,
+        // subscriptionDuration,
+        // setSubscriptionDuration,
+        // handleSubscribe,
+        // setUserAddress,
     } = useEncryption()
+    
+     // // 订阅服务参数
+    // const [subscriptionParams, setSubscriptionParams] = useState<{
+    //     serviceId: string;
+    //     fee: number;
+    //     duration: number;
+    // } | null>(null);
+    
+    // // 初始化shareLink
+    // useEffect(() => {
+    //     // 如果分享链接嵌入在URL中（例如通过其他方式分享），可以在这里提取
+    //     // 不依赖于路由系统，仅作为可选功能
+    //     if (window.location.search) {
+    //         try {
+    //             const params = new URLSearchParams(window.location.search);
+    //             const link = params.get('link');
+    //             if (link) {
+    //                 setShareLink(link);
+    //                 setActiveSection('view');
+    //             }
+    //         } catch (error) {
+    //             console.error('无法解析URL参数:', error);
+    //         }
+    //     }
+    // }, []);
+    
+    // // 在useEffect中添加对currentAccount的监听
+    // useEffect(() => {
+    //     if (currentAccount?.address) {
+    //         // 将当前钱包地址传递给useEncryption
+    //         setUserAddress(currentAccount.address);
+    //     }
+    // }, [currentAccount, setUserAddress]);
+    
+    // // 监听钱包连接状态
+    // useEffect(() => {
+    //     // 简单地记录钱包连接状态
+    //     console.log('钱包连接状态:', !!currentAccount);
+    // }, [currentAccount]);
+    
     
     // 初始化shareLink
     useEffect(() => {
@@ -114,6 +166,20 @@ export default function App() {
                         shareLink={shareLink}
                         onUpload={handleUpload}
                     />
+                // <UploadPage
+                //     isUploading={isUploading}
+                //     encryptionProgress={encryptionProgress}
+                //     shareLink={shareLink}
+                //     onUpload={handleUpload}
+                //     accessControl={accessControl}
+                //     setAccessControl={setAccessControl}
+                //     allowedAddresses={allowedAddresses}
+                //     setAllowedAddresses={setAllowedAddresses}
+                //     subscriptionFee={subscriptionFee}
+                //     setSubscriptionFee={setSubscriptionFee}
+                //     subscriptionDuration={subscriptionDuration}
+                //     setSubscriptionDuration={setSubscriptionDuration}
+                // />
                 )
             case 'view':
                 return (
@@ -126,6 +192,19 @@ export default function App() {
                         onDecrypt={handleDecrypt}
                     />
                 )
+            // case 'subscribe':
+            //     // 订阅服务页面
+            //     if (!subscriptionParams) {
+            //         return <div>无效的订阅参数</div>;
+            //     }
+            //     return (
+            //         <SubscriptionPage 
+            //             serviceId={subscriptionParams.serviceId}
+            //             fee={subscriptionParams.fee}
+            //             duration={subscriptionParams.duration}
+            //             onSubscribe={handleSubscribeRequest}
+            //         />
+            //     )
             default:
                 return <HomePage 
                     onStart={navigateToUpload}

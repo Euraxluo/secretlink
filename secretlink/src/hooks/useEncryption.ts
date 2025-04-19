@@ -196,7 +196,7 @@ export const useEncryption = () => {
                     
                     setShareLink(finalShareLink);
                     setEncryptionProgress({step: 6, message: 'Encryption complete!'});
-                    
+                    setIsUploading(false);
                     return finalShareLink;
                 } catch (error) {
                     console.error("Seal优化加密失败:", error);

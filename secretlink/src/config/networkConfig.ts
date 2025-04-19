@@ -2,6 +2,9 @@ import {createNetworkConfig, NetworkConfig} from "@mysten/dapp-kit";
 import { getRpcNodes } from "./rpcNodeList";
 import {TESTNET_CHECK_PACKAGE_ID, TESTNET_LINK_STORE_OBJECT_ID} from "./constants";
 
+type Network = "testnet" | "mainnet";
+// 定义网络配置类型
+
 // 定义具体的 Variables 类型
 interface Variables {
     Package: string;
